@@ -1,0 +1,11 @@
+node_modules/
+app/**/.env
+app/frontend/dist/
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfplan
+terraform/*.tfvars
+!terraform/*.tfvars.example
+terraform/*.backend.hcl
+terraform/backend-*.hcl

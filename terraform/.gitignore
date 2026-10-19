@@ -1,0 +1,28 @@
+# Terraform state
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+
+# Terraform variable files
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+*.auto.tfvars
+
+# Sensitive or local configuration
+*.secret
+*.pem
+*.key
+*.backend.hcl
+backend-*.hcl
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Local overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

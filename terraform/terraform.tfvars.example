@@ -1,0 +1,8 @@
+subscription_id = "REPLACE-WITH-AZURE-SUBSCRIPTION-ID"
+owner           = "your-name-or-team"
+location        = "centralindia"
+project_name    = "student-registration"
+environment     = "dev"
+availability_zones = ["1", "2"]
+database_admin_principal_name = "your-user@your-tenant.onmicrosoft.com"
+database_admin_principal_type = "User"

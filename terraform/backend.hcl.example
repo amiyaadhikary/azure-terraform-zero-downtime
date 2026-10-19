@@ -1,0 +1,8 @@
+# Copy to backend-dev.hcl or backend-prod.hcl and set real resource names.
+# Keep the copied files local; the backend config may contain sensitive values.
+resource_group_name  = "rg-tfstate"
+storage_account_name = "sttfstatechange"
+container_name       = "tfstate"
+key                  = "student-registration/dev.tfstate"
+use_azuread_auth     = true
+use_cli              = true
