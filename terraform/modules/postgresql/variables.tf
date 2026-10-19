@@ -1,0 +1,17 @@
+variable "name_prefix" { type = string }
+variable "location" { type = string }
+variable "resource_group_name" { type = string }
+variable "delegated_subnet_id" { type = string }
+variable "private_dns_zone_id" { type = string }
+variable "tenant_id" { type = string }
+variable "administrator_principal_name" { type = string }
+variable "administrator_principal_id" { type = string }
+variable "administrator_principal_type" { type = string }
+variable "database_name" { type = string }
+variable "postgres_version" { type = string }
+variable "sku_name" { type = string }
+variable "storage_mb" { type = number }
+variable "backup_retention_days" { type = number }
+variable "zone" { type = string }
+variable "high_availability_enabled" { type = bool }
+variable "tags" { type = map(string) }
