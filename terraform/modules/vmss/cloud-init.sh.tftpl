@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+set +x
+# Release version: ${release_version}
+exec > >(tee -a /var/log/student-registration-deploy.log | logger -t student-registration-deploy) 2>&1
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y ca-certificates curl jq unzip
+curl --fail --silent --show-error https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y nodejs
+
+storage_token() {
+  curl --fail --silent --show-error --retry 3 --header 'Metadata: true' \
+    'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com' \
+    | jq -er '.access_token'
+}
+
+artifact="/var/tmp/student-registration-release.zip"
+release_ready=false
+for attempt in {1..90}; do
+  token="$(storage_token 2>/dev/null || true)"
+  if [[ -n "$token" ]] && curl --fail --silent --output "$artifact" \
+      --header "Authorization: Bearer $token" \
+      --header 'x-ms-version: 2023-11-03' \
+      '${blob_endpoint}/${release_container}/${release_blob_name}'; then
+    release_ready=true
+    unset token
+    break
+  fi
+  unset token
+  sleep 20
+done
+[[ "$release_ready" == true && -s "$artifact" ]] || { echo 'Application release was not available after retries'; exit 1; }
+
+install -d -o root -g root -m 0750 /opt/student-registration
+unzip -oq "$artifact" -d /opt/student-registration
+cd /opt/student-registration
+npm ci --omit=dev --no-audit --no-fund
+cat > /opt/student-registration/.env <<EOF
+DB_HOST=${database_host}
+DB_NAME=${database_name}
+DB_USER=${database_user}
+DB_AUTH=managed_identity
+DB_SSL=true
+DB_PORT=5432
+PORT=5000
+EOF
+chmod 600 /opt/student-registration/.env
+
+if ! id studentapp >/dev/null 2>&1; then
+  useradd --system --home-dir /opt/student-registration --shell /usr/sbin/nologin studentapp
+fi
+chown -R studentapp:studentapp /opt/student-registration
+cat > /etc/systemd/system/student-registration.service <<'UNIT'
+[Unit]
+Description=Student Registration API
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+WorkingDirectory=/opt/student-registration
+EnvironmentFile=/opt/student-registration/.env
+ExecStart=/usr/bin/node /opt/student-registration/src/server.js
+Restart=always
+RestartSec=5
+User=studentapp
+Group=studentapp
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now student-registration.service
+unset token
+rm -f "$artifact"
+echo 'Student Registration application deployment completed.'
