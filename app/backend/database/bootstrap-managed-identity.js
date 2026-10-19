@@ -50,22 +50,18 @@ try {
   await appPool.query(schema);
 
   const existingPrincipal = await maintenancePool.query(
-    `SELECT "objectId" FROM pg_catalog.pgaadauth_list_principals(false) WHERE rolename = $1`,
+    `SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = $1`,
     [appUser],
   );
-  let appPrincipalExists = existingPrincipal.rowCount > 0;
-  if (existingPrincipal.rowCount && existingPrincipal.rows[0].objectId !== appObjectId) {
+  if (existingPrincipal.rowCount > 0) {
     await appPool.query(`DROP OWNED BY ${quoteIdentifier(appUser)}`);
     await maintenancePool.query(`DROP ROLE ${quoteIdentifier(appUser)}`);
-    appPrincipalExists = false;
   }
 
-  if (!appPrincipalExists) {
-    await maintenancePool.query(
-      "SELECT * FROM pg_catalog.pgaadauth_create_principal_with_oid($1, $2, 'service', false, false)",
-      [appUser, appObjectId],
-    );
-  }
+  await maintenancePool.query(
+    "SELECT * FROM pg_catalog.pgaadauth_create_principal_with_oid($1, $2, 'service', false, false)",
+    [appUser, appObjectId],
+  );
 
   const quotedDatabase = quoteIdentifier(databaseName);
   const quotedAppUser = quoteIdentifier(appUser);

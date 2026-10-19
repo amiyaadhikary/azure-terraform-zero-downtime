@@ -15,7 +15,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "api" {
     max_unhealthy_upgraded_instance_percent = 100
     pause_time_between_batches              = "PT1M"
   }
-  custom_data = base64encode(templatefile("${path.module}/cloud-init.sh.tftpl", {
+  custom_data = base64encode(replace(templatefile("${path.module}/cloud-init.sh.tftpl", {
     blob_endpoint     = trimsuffix(var.blob_endpoint, "/")
     release_container = var.release_container_name
     release_blob_name = var.release_blob_name
@@ -23,7 +23,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "api" {
     database_host     = var.database_host
     database_name     = var.database_name
     database_user     = var.database_user
-  }))
+  }), "\r\n", "\n"))
   tags = var.tags
 
   admin_ssh_key {

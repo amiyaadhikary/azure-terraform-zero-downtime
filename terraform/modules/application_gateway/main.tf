@@ -4,9 +4,9 @@ resource "azurerm_public_ip" "main" {
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
+  zones               = var.availability_zones
   domain_name_label   = substr(replace(var.name_prefix, "_", "-"), 0, 50)
   tags                = var.tags
-
 }
 
 resource "azurerm_application_gateway" "main" {

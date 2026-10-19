@@ -6,14 +6,15 @@ environment="${1:-dev}"
 [[ "$environment" == dev || "$environment" == prod ]] || { echo 'Usage: bash scripts/run-vmss-command.sh [dev|prod] [shell-command]' >&2; exit 2; }
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tf_dir="$root/terraform"
+if command -v cygpath >/dev/null 2>&1; then tf_chdir="$(cygpath -w "$tf_dir")"; else tf_chdir="$tf_dir"; fi
 backend="$tf_dir/backend-$environment.hcl"
 [[ -f "$backend" ]] || { echo 'Bootstrap and initialize remote state first.' >&2; exit 1; }
 command -v az >/dev/null && command -v terraform >/dev/null || { echo 'Azure CLI and Terraform are required.' >&2; exit 1; }
 
-tf_output() { terraform -chdir="$tf_dir" output -raw "$1"; }
+tf_output() { terraform -chdir="$tf_chdir" output -raw "$1" | tr -d '\r'; }
 resource_group="$(tf_output resource_group_name)"
 vmss="$(tf_output vmss_name)"
-instance_id="$(az vmss list-instances --resource-group "$resource_group" --name "$vmss" --query '[0].instanceId' -o tsv)"
+instance_id="$(az vmss list-instances --resource-group "$resource_group" --name "$vmss" --query '[0].instanceId' -o tsv | tr -d '\r')"
 [[ -n "$instance_id" && "$instance_id" != None ]] || { echo 'No VMSS instance is available.' >&2; exit 1; }
 if [[ $# -ge 2 ]]; then
   remote_command="$2"

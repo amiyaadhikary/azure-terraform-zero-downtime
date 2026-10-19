@@ -1,0 +1,16 @@
+subscription_id = "00000000-0000-0000-0000-000000000000"
+owner           = "your-name-or-team"
+location        = "centralindia"
+project_name    = "student-registration"
+environment     = "prod"
+availability_zones = ["1", "2"]
+postgres_sku_name              = "GP_Standard_D2s_v3"
+database_storage_mb            = 65536
+database_backup_retention_days = 14
+database_high_availability     = true
+database_deletion_protection   = true
+storage_replication_type       = "ZRS"
+vmss_sku                        = "Standard_D2s_v5"
+api_min_instances               = 2
+api_max_instances               = 6
+api_instance_count              = 2

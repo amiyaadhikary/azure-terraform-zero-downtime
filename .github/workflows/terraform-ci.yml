@@ -1,0 +1,87 @@
+name: Terraform CI — Format, Validate & Security Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform-ci.yml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate-and-scan:
+    name: Terraform fmt, validate, tflint & tfsec
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Check Terraform formatting (fmt)
+        id: fmt
+        run: terraform fmt -check -recursive
+
+      - name: Initialize Terraform (backend=false for static CI validation)
+        id: init
+        run: terraform init -backend=false
+
+      - name: Validate Terraform configuration
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Run TFLint
+        id: tflint
+        run: |
+          tflint --init
+          tflint --recursive
+
+      - name: Run Trivy (tfsec) IaC Security Scanner
+        id: tfsec
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: "config"
+          scan-ref: "terraform"
+          exit-code: "0"
+          format: "table"
+
+      - name: Post CI Validation Summary on Pull Request
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `### 🤖 Operation Zero Downtime — Terraform CI Summary
+            | Check | Status |
+            |---|---|
+            | \`terraform fmt -check\` | **${{ steps.fmt.outcome }}** |
+            | \`terraform init -backend=false\` | **${{ steps.init.outcome }}** |
+            | \`terraform validate\` | **${{ steps.validate.outcome }}** |
+            | \`tflint --recursive\` | **${{ steps.tflint.outcome }}** |
+            | \`trivy config (tfsec)\` | **${{ steps.tfsec.outcome }}** |
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

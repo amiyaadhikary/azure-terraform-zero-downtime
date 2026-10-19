@@ -39,8 +39,9 @@ resource "azurerm_postgresql_flexible_server_active_directory_administrator" "ma
 }
 
 resource "azurerm_postgresql_flexible_server_database" "main" {
-  name      = var.database_name
-  server_id = azurerm_postgresql_flexible_server.main.id
-  collation = "en_US.utf8"
-  charset   = "UTF8"
+  name       = var.database_name
+  server_id  = azurerm_postgresql_flexible_server.main.id
+  collation  = "en_US.utf8"
+  charset    = "UTF8"
+  depends_on = [azurerm_postgresql_flexible_server_active_directory_administrator.main]
 }

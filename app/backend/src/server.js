@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import os from "node:os";
 import path from "node:path";
 import pool from "./config/db.js";
 import studentRoutes from "./routes/studentRoutes.js";
@@ -35,13 +36,14 @@ app.use(express.static(path.resolve(process.env.PUBLIC_DIR || "public")));
 app.get("/", (req, res) => {
   res.json({
     message: "Student Registration API is running",
+    hostname: os.hostname(),
   });
 });
 
 app.get("/health", (req, res) => {
   pool.query("SELECT 1").then(
-    () => res.status(200).json({ status: "ok" }),
-    () => res.status(503).json({ status: "database_unavailable" }),
+    () => res.status(200).json({ status: "ok", hostname: os.hostname() }),
+    () => res.status(503).json({ status: "database_unavailable", hostname: os.hostname() }),
   );
 });
 
