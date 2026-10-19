@@ -1,5 +1,7 @@
 # Azure architecture
 
+![Azure Architecture Diagram](architecture.png)
+
 ```mermaid
 flowchart LR
   U[Browser] -->|Public HTTP capstone demo| AGW[Application Gateway Standard_v2]
